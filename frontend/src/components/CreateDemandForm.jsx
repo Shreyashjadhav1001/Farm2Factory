@@ -13,7 +13,7 @@ const CreateDemandForm = ({ onClose, onDemandCreated, editData = null }) => {
     location: '',
     transportResponsibility: 'Factory',
     demandType: 'Individual',
-    locationCoordinates: { type: 'Point', coordinates: [0, 0] }
+    locationCoordinates: { type: 'Point', coordinates: [74.5815, 16.8524] } // Default to Sangli
   });
   
   const [loading, setLoading] = useState(false);
@@ -31,7 +31,7 @@ const CreateDemandForm = ({ onClose, onDemandCreated, editData = null }) => {
         ...editData,
         startDate: formatDate(editData.startDate),
         endDate: formatDate(editData.endDate),
-        locationCoordinates: editData.locationCoordinates || { type: 'Point', coordinates: [0, 0] }
+        locationCoordinates: editData.locationCoordinates || { type: 'Point', coordinates: [74.5815, 16.8524] }
       });
     }
   }, [editData]);

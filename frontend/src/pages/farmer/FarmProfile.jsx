@@ -1,8 +1,9 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { User, MapPin, Scale, Sprout, TrendingUp, Calendar, Trash2 } from 'lucide-react';
 import axios from 'axios';
 
 const FarmProfile = () => {
+  const fileInputRef = useRef(null);
   const [profile, setProfile] = useState({
     fullName: '',
     farmLocation: '',
@@ -45,6 +46,22 @@ const FarmProfile = () => {
     } catch (err) {
       alert('Error updating profile');
     }
+  };
+
+  const handleImageUpload = (e) => {
+    const files = Array.from(e.target.files);
+    const imageUrls = files.map(file => URL.createObjectURL(file));
+    setProfile(prev => ({
+      ...prev,
+      images: [...(prev.images || []), ...imageUrls]
+    }));
+  };
+
+  const removeImage = (index) => {
+    setProfile(prev => ({
+      ...prev,
+      images: prev.images.filter((_, i) => i !== index)
+    }));
   };
 
   if (loading) return <div>Loading Profile...</div>;
@@ -138,19 +155,33 @@ const FarmProfile = () => {
             </div>
           </div>
 
-          {/* Image Gallery */}
           <div className="bg-white rounded-[2rem] border border-slate-100 shadow-xl shadow-slate-200/40 p-10">
             <h3 className="text-xl font-black text-slate-800 mb-8 px-1">Crop Quality Photos</h3>
             <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+              <input 
+                type="file" 
+                multiple 
+                accept="image/*" 
+                ref={fileInputRef}
+                onChange={handleImageUpload}
+                className="hidden"
+              />
               {profile.images?.map((url, i) => (
                 <div key={i} className="aspect-square bg-slate-100 rounded-2xl overflow-hidden border border-slate-100 group relative">
                   <img src={url} alt={`Crop ${i}`} className="w-full h-full object-cover" />
-                  <button className="absolute top-2 right-2 p-2 bg-red-500 text-white rounded-lg opacity-0 group-hover:opacity-100 transition shadow-lg">
+                  <button 
+                    type="button"
+                    onClick={() => removeImage(i)}
+                    className="absolute top-2 right-2 p-2 bg-red-500 text-white rounded-lg opacity-0 group-hover:opacity-100 transition shadow-lg z-10"
+                  >
                     <Trash2 size={16} />
                   </button>
                 </div>
               ))}
-              <div className="aspect-square border-2 border-dashed border-slate-200 rounded-2xl flex flex-col items-center justify-center text-slate-400 hover:border-emerald-500 hover:text-emerald-500 transition cursor-pointer bg-slate-50/50">
+              <div 
+                onClick={() => fileInputRef.current.click()}
+                className="aspect-square border-2 border-dashed border-slate-200 rounded-2xl flex flex-col items-center justify-center text-slate-400 hover:border-emerald-500 hover:text-emerald-500 transition cursor-pointer bg-slate-50/50"
+              >
                 <Plus size={32} className="mb-2" />
                 <span className="text-xs font-bold uppercase tracking-wider">Add Photo</span>
               </div>

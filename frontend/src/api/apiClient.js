@@ -17,4 +17,7 @@ apiClient.interceptors.request.use((config) => {
   return config;
 });
 
+export const getAllDemands = () => apiClient.get('/demands/all');
+export const getFarmerDashboard = () => apiClient.get('/farmer/dashboard');
+export const updateContribution = (id, data) => apiClient.put(`/farmer/contribution/update/${id}`, data);
 export default apiClient;

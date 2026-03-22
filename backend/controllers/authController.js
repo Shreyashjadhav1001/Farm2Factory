@@ -25,7 +25,11 @@ exports.register = async (req, res) => {
       email,
       password,
       role,
-      location
+      location,
+      locationCoordinates: {
+        type: 'Point',
+        coordinates: [74.5815, 16.8524]
+      }
     });
 
     res.status(201).json({

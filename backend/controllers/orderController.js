@@ -102,11 +102,25 @@ exports.updateParticipantStatus = async (req, res) => {
     order.status = status;
     await order.save();
 
-    // Update demand fulfilledQuantity if status changed to/from ACCEPTED
-    if (status === 'ACCEPTED' && oldStatus !== 'ACCEPTED') {
-      await Demand.findByIdAndUpdate(order.demandId._id, { $inc: { fulfilledQuantity: order.quantity } });
-    } else if (status !== 'ACCEPTED' && oldStatus === 'ACCEPTED') {
-       await Demand.findByIdAndUpdate(order.demandId._id, { $inc: { fulfilledQuantity: -order.quantity } });
+    const demand = await Demand.findById(order.demandId._id);
+    if (demand) {
+      if (status === 'REJECTED' && oldStatus !== 'REJECTED') {
+        // Revert contribution if it was previously counted (PENDING or ACCEPTED)
+        demand.fulfilledQuantity = Math.max(0, (demand.fulfilledQuantity || 0) - order.quantity);
+        demand.status = 'OPEN';
+        await demand.save();
+      } else if (status === 'ACCEPTED' && oldStatus !== 'ACCEPTED') {
+        if (oldStatus === 'REJECTED') {
+          demand.fulfilledQuantity = (demand.fulfilledQuantity || 0) + order.quantity;
+          if (demand.fulfilledQuantity >= demand.totalQuantityRequired) {
+            demand.status = 'COMPLETED';
+          }
+          await demand.save();
+        }
+      } else if (status === 'PENDING' && oldStatus === 'REJECTED') {
+        demand.fulfilledQuantity = (demand.fulfilledQuantity || 0) + order.quantity;
+        await demand.save();
+      }
     }
 
     res.json(order);

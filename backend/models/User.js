@@ -10,14 +10,16 @@ const userSchema = new mongoose.Schema({
   // NOTE: 
   // Geo-location feature temporarily disabled.
   // Will re-enable when frontend sends latitude & longitude.
-  /*
   locationCoordinates: {
     type: { type: String, enum: ['Point'], default: 'Point' },
-    coordinates: { type: [Number], index: '2dsphere' } // [longitude, latitude]
+    coordinates: { type: [Number], default: [74.5815, 16.8524] } // [longitude, latitude] - Default to Sangli
   },
-  */
   phone: { type: String },
-  kycStatus: { type: String, enum: ['unverified', 'pending', 'verified'], default: 'unverified' },
+  kycStatus: { type: String, enum: ['unverified', 'pending', 'verified', 'submitted'], default: 'unverified' },
+  fullName: { type: String },
+  aadharNumber: { type: String },
+  bankAccountNumber: { type: String },
+  ifscCode: { type: String },
   walletBalance: { type: Number, default: 0 },
   // Farmer specific
   rating: { type: Number, default: 0 },

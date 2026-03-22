@@ -10,23 +10,7 @@ const FarmerDashboard = () => {
   const location = useLocation();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [notifications, setNotifications] = useState([]);
-  const [kycStatus, setKycStatus] = useState(user?.kycStatus || 'unverified');
 
-  useEffect(() => {
-    // Check KYC status on load
-    const fetchDashboard = async () => {
-      try {
-        const token = localStorage.getItem('token');
-        const res = await axios.get('http://localhost:5000/api/farmer/dashboard', {
-          headers: { Authorization: `Bearer ${token}` }
-        });
-        setKycStatus(res.data.kycStatus);
-      } catch (err) {
-        console.error('Error fetching dashboard data', err);
-      }
-    };
-    fetchDashboard();
-  }, []);
 
   const navItems = [
     { name: 'Overview', path: '/farmer-dashboard', icon: <Home size={20} /> },
@@ -137,10 +121,10 @@ const FarmerDashboard = () => {
           </div>
 
           <div className="flex items-center gap-4">
-            {kycStatus === 'verified' ? (
+            {(user?.kycStatus === 'verified' || user?.kycStatus === 'submitted') ? (
               <div className="hidden md:flex items-center gap-1.5 px-3 py-1 bg-emerald-50 text-emerald-600 rounded-full border border-emerald-100 text-xs font-bold uppercase tracking-wider">
                 <CheckCircle size={14} />
-                Verified KYC
+                {user?.kycStatus === 'verified' ? 'Verified KYC' : 'KYC Submitted'}
               </div>
             ) : (
               <Link to="/farmer-dashboard/kyc" className="hidden md:flex items-center gap-1.5 px-3 py-1 bg-amber-50 text-amber-600 rounded-full border border-amber-100 text-xs font-bold uppercase tracking-wider hover:bg-amber-100 transition">

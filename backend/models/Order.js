@@ -10,6 +10,11 @@ const orderSchema = new mongoose.Schema({
     enum: ['PENDING', 'ACCEPTED', 'REJECTED', 'PROCESSING', 'DISPATCHED', 'IN_TRANSIT', 'ARRIVED', 'DELIVERED', 'CANCELLED'], 
     default: 'PENDING' 
   },
+  contributionType: { 
+    type: String, 
+    enum: ['Individual', 'Pool'], 
+    default: 'Individual' 
+  },
   dispatchDetails: {
     driverName: { type: String },
     driverPhone: { type: String },

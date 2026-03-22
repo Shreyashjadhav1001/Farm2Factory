@@ -1,8 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { Wallet as WalletIcon, ArrowUpRight, ArrowDownLeft, Plus, History, Landmark } from 'lucide-react';
 import axios from 'axios';
+import { useAuth } from '../../context/AuthContext';
 
 const WalletPage = () => {
+  const { user } = useAuth();
   const [balance, setBalance] = useState(0);
   const [transactions, setTransactions] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -108,10 +110,21 @@ const WalletPage = () => {
             </div>
             {!isDeposit && (
               <div className="p-4 bg-amber-50 rounded-xl border border-amber-100 text-[11px] leading-relaxed text-amber-700 font-medium">
-                Note: Money will be transferred to your verified bank account within 24-48 hours.
+                {user.kycStatus === 'unverified' ? (
+                  <span className="text-red-600 font-bold">⚠️ Please complete your KYC to enable withdrawals.</span>
+                ) : (
+                  "Note: Money will be transferred to your verified bank account within 24-48 hours."
+                )}
               </div>
             )}
-            <button className={`w-full py-4 rounded-xl font-black text-white shadow-lg transition-all active:scale-[0.98] ${isDeposit ? 'bg-emerald-600 hover:bg-emerald-700 shadow-emerald-500/20' : 'bg-amber-600 hover:bg-amber-700 shadow-amber-500/20'}`}>
+            <button 
+              disabled={!isDeposit && user.kycStatus === 'unverified'}
+              className={`w-full py-4 rounded-xl font-black text-white shadow-lg transition-all active:scale-[0.98] ${
+                !isDeposit && user.kycStatus === 'unverified' 
+                ? 'bg-slate-300 cursor-not-allowed shadow-none' 
+                : (isDeposit ? 'bg-emerald-600 hover:bg-emerald-700 shadow-emerald-500/20' : 'bg-amber-600 hover:bg-amber-700 shadow-amber-500/20')
+              }`}
+            >
               Proceed Transaction
             </button>
           </form>

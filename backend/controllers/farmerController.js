@@ -13,15 +13,35 @@ exports.getNearbyDemands = async (req, res) => {
   if (!lng || !lat) return res.status(400).json({ message: 'Longitude and Latitude are required' });
 
   try {
-    const demands = await Demand.find({
-      locationCoordinates: {
-        $near: {
-          $geometry: { type: 'Point', coordinates: [parseFloat(lng), parseFloat(lat)] },
-          $maxDistance: 100000 // 100km in meters
+    // Use aggregation to get distance
+    const demands = await Demand.aggregate([
+      {
+        $geoNear: {
+          near: { type: 'Point', coordinates: [parseFloat(lng), parseFloat(lat)] },
+          distanceField: 'distance',
+          distanceMultiplier: 0.001, // Convert meters to km
+          spherical: true,
+          query: { status: 'OPEN' }
         }
       },
-      status: 'OPEN'
-    }).populate('createdBy', 'name');
+      {
+        $lookup: {
+          from: 'users',
+          localField: 'createdBy',
+          foreignField: '_id',
+          as: 'createdBy'
+        }
+      },
+      {
+        $unwind: '$createdBy'
+      },
+      {
+        $project: {
+          'createdBy.password': 0,
+          'createdBy.email': 0
+        }
+      }
+    ]);
 
     res.json(demands);
   } catch (err) {
@@ -32,25 +52,31 @@ exports.getNearbyDemands = async (req, res) => {
 // @desc    Submit KYC details
 // @route   POST /api/farmer/kyc
 exports.submitKYC = async (req, res) => {
-  const { fullName, aadharNumber, bankAccountNumber, ifscCode, farmLocation, farmSize } = req.body;
+  const { fullName, aadharNumber, bankAccountNumber, ifscCode } = req.body;
+  
+  // Basic validation
+  if (!fullName || !aadharNumber || !bankAccountNumber || !ifscCode) {
+    return res.status(400).json({ message: 'All fields are required' });
+  }
+
+  if (aadharNumber.length !== 12) {
+    return res.status(400).json({ message: 'Aadhar Number must be 12 digits' });
+  }
+
   try {
-    let profile = await FarmerProfile.findOne({ userId: req.user.id });
-    if (profile) return res.status(400).json({ message: 'KYC already submitted' });
+    const user = await User.findByIdAndUpdate(
+      req.user.id,
+      {
+        fullName,
+        aadharNumber,
+        bankAccountNumber,
+        ifscCode,
+        kycStatus: 'submitted'
+      },
+      { new: true }
+    );
 
-    profile = new FarmerProfile({
-      userId: req.user.id,
-      fullName,
-      aadharNumber,
-      bankAccountNumber,
-      ifscCode,
-      farmLocation,
-      farmSize
-    });
-    await profile.save();
-
-    await User.findByIdAndUpdate(req.user.id, { kycStatus: 'pending' });
-
-    res.status(201).json({ message: 'KYC submitted successfully', profile });
+    res.status(200).json({ message: 'KYC updated successfully', user });
   } catch (err) {
     res.status(500).json({ message: 'Server error', error: err.message });
   }
@@ -60,31 +86,75 @@ exports.submitKYC = async (req, res) => {
 // @route   POST /api/farmer/join-demand
 exports.joinDemand = async (req, res) => {
   const { demandId, quantity, type, poolId } = req.body;
+  
   try {
     const demand = await Demand.findById(demandId);
     if (!demand) return res.status(404).json({ message: 'Demand not found' });
+
+    if (demand.status !== 'OPEN') {
+      return res.status(400).json({ message: 'This demand is no longer open for contributions' });
+    }
+
+    const remaining = demand.totalQuantityRequired - (demand.fulfilledQuantity || 0);
+
+    let contributionQuantity;
+    if (type === 'Individual') {
+      contributionQuantity = remaining;
+    } else {
+      contributionQuantity = parseFloat(quantity);
+    }
+
+    if (isNaN(contributionQuantity) || contributionQuantity <= 0) {
+      return res.status(400).json({ message: 'Valid quantity is required' });
+    }
+
+    if (contributionQuantity > remaining) {
+      return res.status(400).json({ message: `Insufficient capacity. Only ${remaining} Tons remaining.` });
+    }
 
     if (type === 'Individual') {
       const order = new Order({
         demandId,
         farmerId: req.user.id,
         factoryId: demand.createdBy,
-        quantity,
+        quantity: contributionQuantity,
+        contributionType: 'Individual',
         status: 'PENDING'
       });
       await order.save();
-      return res.status(201).json({ message: 'Joined demand individually', order });
+
+      // Update demand
+      demand.fulfilledQuantity = (demand.fulfilledQuantity || 0) + contributionQuantity;
+      if (demand.fulfilledQuantity >= demand.totalQuantityRequired) {
+        demand.status = 'COMPLETED';
+      }
+      await demand.save();
+
+      return res.status(201).json({ message: 'You have successfully taken the full remaining demand!', order });
     } else if (type === 'Pool') {
       const pool = await Pool.findById(poolId);
       if (!pool) return res.status(404).json({ message: 'Pool not found' });
+      
+      if (pool.status !== 'OPEN') {
+        return res.status(400).json({ message: 'This pool is no longer open' });
+      }
 
-      pool.farmersJoined.push({ farmerId: req.user.id, quantityCommitted: quantity });
-      pool.totalQuantityCommitted += quantity;
+      pool.farmersJoined.push({ farmerId: req.user.id, quantityCommitted: contributionQuantity });
+      pool.totalQuantityCommitted += contributionQuantity;
       await pool.save();
+
+      // Update demand
+      demand.fulfilledQuantity = (demand.fulfilledQuantity || 0) + contributionQuantity;
+      if (demand.fulfilledQuantity >= demand.totalQuantityRequired) {
+        demand.status = 'COMPLETED';
+      }
+      await demand.save();
+
       return res.json({ message: 'Joined pool successfully', pool });
     }
     res.status(400).json({ message: 'Invalid contribution type' });
   } catch (err) {
+    console.error("JOIN DEMAND ERROR:", err);
     res.status(500).json({ message: 'Server error', error: err.message });
   }
 };
@@ -133,7 +203,16 @@ exports.getFarmerDashboard = async (req, res) => {
     const user = await User.findById(req.user.id);
     const pools = await Pool.find({ 'farmersJoined.farmerId': req.user.id }).populate('demandId');
     
-    res.json({ orders, kycStatus: user.kycStatus, walletBalance: user.walletBalance, pools });
+    res.json({ 
+      orders, 
+      kycStatus: user.kycStatus, 
+      walletBalance: user.walletBalance,
+      fullName: user.fullName,
+      aadharNumber: user.aadharNumber,
+      bankAccountNumber: user.bankAccountNumber,
+      ifscCode: user.ifscCode,
+      pools 
+    });
   } catch (err) {
     res.status(500).json({ message: 'Server error', error: err.message });
   }
@@ -261,5 +340,94 @@ exports.generateAgreement = async (req, res) => {
 
   } catch (err) {
     res.status(500).json({ message: 'Error generating agreement', error: err.message });
+  }
+};
+
+// @desc    Update an existing contribution (Order)
+// @route   PUT /api/farmer/contribution/update/:id
+exports.updateContribution = async (req, res) => {
+  const { quantity, type } = req.body;
+  const newQuantity = parseFloat(quantity);
+
+  if (isNaN(newQuantity) || newQuantity < 0) {
+    return res.status(400).json({ message: 'Valid quantity is required' });
+  }
+
+  try {
+    const order = await Order.findById(req.params.id);
+    if (!order) return res.status(404).json({ message: 'Contribution not found' });
+    if (order.farmerId.toString() !== req.user.id) {
+      return res.status(403).json({ message: 'Not authorized to update this contribution' });
+    }
+
+    const demand = await Demand.findById(order.demandId);
+    if (!demand) return res.status(404).json({ message: 'Associated demand not found' });
+
+    if (demand.status !== 'OPEN' && demand.status !== 'COMPLETED') {
+      return res.status(400).json({ message: 'Cannot update contribution for a locked demand' });
+    }
+
+    const oldQuantity = order.quantity;
+    
+    // Step 1: Temporarily revert old contribution to calculate true remaining
+    const tempFulfilled = (demand.fulfilledQuantity || 0) - oldQuantity;
+    const trueRemaining = demand.totalQuantityRequired - tempFulfilled;
+
+    let finalQuantity = newQuantity;
+    let finalType = type || order.contributionType || 'Individual';
+
+    // Step 2: Handle type-specific logic
+    if (finalType === 'Individual') {
+        finalQuantity = trueRemaining;
+    }
+
+    if (finalQuantity > trueRemaining) {
+      return res.status(400).json({ message: `Insufficient capacity. Only ${trueRemaining} Tons available.` });
+    }
+
+    // Update order
+    order.quantity = finalQuantity;
+    order.contributionType = finalType;
+    if (finalQuantity === 0) {
+      order.status = 'CANCELLED';
+    }
+    await order.save();
+
+    // Update demand
+    demand.fulfilledQuantity = tempFulfilled + finalQuantity;
+    if (demand.fulfilledQuantity >= demand.totalQuantityRequired) {
+      demand.status = 'COMPLETED';
+    } else {
+      demand.status = 'OPEN';
+    }
+    await demand.save();
+
+    const msg = finalQuantity === 0 ? 'Contribution reset successfully' : 'Contribution updated successfully';
+    res.json({ message: msg, order });
+  } catch (err) {
+    console.error("UPDATE CONTRIBUTION ERROR:", err);
+    res.status(500).json({ message: 'Server error', error: err.message });
+  }
+};
+
+// @desc    Delete an inactive contribution (quantity 0)
+// @route   DELETE /api/farmer/contribution/:id
+exports.deleteContribution = async (req, res) => {
+  try {
+    const order = await Order.findById(req.params.id);
+    if (!order) return res.status(404).json({ message: 'Contribution not found' });
+    
+    if (order.farmerId.toString() !== req.user.id) {
+      return res.status(403).json({ message: 'Not authorized' });
+    }
+
+    if (order.quantity > 0) {
+      return res.status(400).json({ message: 'Cannot delete an active contribution. Reset to 0 first.' });
+    }
+
+    await Order.findByIdAndDelete(req.params.id);
+    res.json({ message: 'Order removed successfully' });
+  } catch (err) {
+    res.status(500).json({ message: 'Server error', error: err.message });
   }
 };

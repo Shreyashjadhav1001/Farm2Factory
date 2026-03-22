@@ -31,7 +31,7 @@ const DashboardOverview = () => {
 
   const stats = [
     { title: 'Wallet Balance', value: `₹${data.walletBalance.toLocaleString()}`, icon: <IndianRupee className="text-emerald-600" size={24} />, bg: 'bg-emerald-50', link: '/farmer-dashboard/wallet' },
-    { title: 'Active Orders', value: data.orders.filter(o => o.status !== 'DELIVERED').length.toString(), icon: <FileText className="text-blue-600" size={24} />, bg: 'bg-blue-50', link: '/farmer-dashboard/orders' },
+    { title: 'Active Orders', value: data.orders.filter(o => !['DELIVERED', 'REJECTED', 'CANCELLED'].includes(o.status)).length.toString(), icon: <FileText className="text-blue-600" size={24} />, bg: 'bg-blue-50', link: '/farmer-dashboard/orders' },
     { title: 'Total Pools', value: data.pools.length.toString(), icon: <TrendingUp className="text-purple-600" size={24} />, bg: 'bg-purple-50', link: '/farmer-dashboard/orders' },
     { title: 'KYC Status', value: data.kycStatus.charAt(0).toUpperCase() + data.kycStatus.slice(1), icon: <CheckCircle className="text-orange-600" size={24} />, bg: 'bg-orange-50', link: '/farmer-dashboard/kyc' },
   ];
@@ -82,7 +82,8 @@ const DashboardOverview = () => {
           </div>
           
           <div className="grid grid-cols-1 gap-4">
-            {data.orders.length > 0 ? data.orders.slice(0, 3).map(order => (
+            {data.orders.filter(o => ['ACCEPTED', 'PROCESSING', 'DISPATCHED', 'IN_TRANSIT', 'ARRIVED'].includes(o.status)).length > 0 ? 
+              data.orders.filter(o => ['ACCEPTED', 'PROCESSING', 'DISPATCHED', 'IN_TRANSIT', 'ARRIVED'].includes(o.status)).slice(0, 3).map(order => (
               <div key={order._id} className="bg-white border border-slate-100 rounded-[2rem] p-6 shadow-lg shadow-slate-200/30 flex items-center justify-between hover:border-emerald-200 transition">
                 <div className="flex items-center gap-5">
                   <div className="h-14 w-14 bg-slate-50 rounded-2xl flex items-center justify-center border border-slate-100">
@@ -104,8 +105,8 @@ const DashboardOverview = () => {
               </div>
             )) : (
               <div className="bg-slate-50 border-2 border-dashed border-slate-200 rounded-[2rem] p-12 text-center">
-                 <p className="font-bold text-slate-400">No active orders yet.</p>
-                 <Link to="/farmer-dashboard/demands" className="text-emerald-600 font-bold text-sm hover:underline mt-2 inline-block">Find factory demands →</Link>
+                 <p className="font-bold text-slate-400">No active shipments found.</p>
+                 <Link to="/farmer-dashboard/demands" className="text-emerald-600 font-bold text-sm hover:underline mt-2 inline-block">Explore new demands →</Link>
               </div>
             )}
           </div>
@@ -121,13 +122,18 @@ const DashboardOverview = () => {
             <div className="relative z-10 space-y-8">
                <div>
                  <p className="text-neutral-500 font-bold text-xs uppercase tracking-widest mb-1">Upcoming Earnings</p>
-                 <h4 className="text-4xl font-black tracking-tighter">₹{(data.orders.filter(o => o.status !== 'DELIVERED').reduce((acc, o) => acc + (o.quantity * 3200), 0)).toLocaleString()}</h4>
+                 <h4 className="text-4xl font-black tracking-tighter">
+                   ₹{(data.orders
+                     .filter(o => ['ACCEPTED', 'PROCESSING', 'DISPATCHED', 'IN_TRANSIT', 'ARRIVED'].includes(o.status))
+                     .reduce((acc, o) => acc + (o.quantity * (o.demandId?.ratePerTon || 3200)), 0)
+                   ).toLocaleString()}
+                 </h4>
                </div>
                
                <div className="space-y-4">
                   <div className="flex justify-between items-center text-sm font-medium">
-                    <span className="text-neutral-500">Locked Contracts</span>
-                    <span className="font-bold">{data.orders.length}</span>
+                    <span className="text-neutral-500">Active Contracts</span>
+                    <span className="font-bold">{data.orders.filter(o => !['DELIVERED', 'REJECTED', 'CANCELLED'].includes(o.status)).length}</span>
                   </div>
                   <div className="flex justify-between items-center text-sm font-medium">
                     <span className="text-neutral-500">Pool Participations</span>

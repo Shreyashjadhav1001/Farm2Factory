@@ -10,7 +10,9 @@ const {
   getFarmProfile,
   updateFarmProfile,
   uploadCropImage,
-  generateAgreement
+  generateAgreement,
+  updateContribution,
+  deleteContribution
 } = require('../controllers/farmerController');
 const { protect } = require('../middleware/authMiddleware');
 
@@ -26,5 +28,7 @@ router.get('/farm-profile', getFarmProfile);
 router.put('/update-profile', updateFarmProfile);
 router.post('/upload-crop-image', uploadCropImage);
 router.get('/agreement/:orderId', generateAgreement);
+router.put('/contribution/update/:id', updateContribution);
+router.delete('/contribution/:id', deleteContribution);
 
 module.exports = router;

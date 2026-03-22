@@ -6,7 +6,16 @@ exports.createDemand = async (req, res) => {
     console.log("REQUEST BODY:", req.body);
     console.log("REQUEST USER:", req.user);
 
-    const { title, ratePerTon, totalQuantityRequired, minQuantityPerFarmer, startDate, endDate, location, transportResponsibility, demandType, locationCoordinates } = req.body;
+    let { title, ratePerTon, totalQuantityRequired, minQuantityPerFarmer, startDate, endDate, location, transportResponsibility, demandType, locationCoordinates } = req.body;
+
+    // Default to Sangli coordinates if not provided or [0,0]
+    if (!locationCoordinates || !locationCoordinates.coordinates || 
+        (locationCoordinates.coordinates[0] === 0 && locationCoordinates.coordinates[1] === 0)) {
+      locationCoordinates = {
+        type: 'Point',
+        coordinates: [74.5815, 16.8524]
+      };
+    }
 
     const demand = new Demand({
       title,
@@ -108,6 +117,17 @@ exports.updateDemand = async (req, res) => {
     );
 
     res.json(updatedDemand);
+  } catch (err) {
+    res.status(500).json({ message: 'Server error', error: err.message });
+  }
+};
+
+exports.getAllDemands = async (req, res) => {
+  try {
+    const demands = await Demand.find({ status: 'OPEN' })
+      .populate('createdBy', 'name')
+      .sort({ createdAt: -1 });
+    res.json(demands);
   } catch (err) {
     res.status(500).json({ message: 'Server error', error: err.message });
   }

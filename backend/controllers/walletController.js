@@ -23,8 +23,8 @@ exports.withdrawMoney = async (req, res) => {
   const { amount } = req.body;
   try {
     const user = await User.findById(req.user.id);
-    if (user.kycStatus !== 'verified') {
-      return res.status(403).json({ message: 'KYC must be verified to withdraw money' });
+    if (!['submitted', 'verified'].includes(user.kycStatus)) {
+      return res.status(403).json({ message: 'KYC must be submitted or verified to withdraw money' });
     }
 
     const wallet = await Wallet.findOne({ userId: req.user.id });
