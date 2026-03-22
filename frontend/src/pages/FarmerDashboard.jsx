@@ -117,7 +117,7 @@ const FarmerDashboard = () => {
           </button>
           
           <div className="hidden lg:block">
-            <h1 className="text-xl font-bold text-slate-900">Farmer Dashboard</h1>
+            <h1 className="text-xl font-bold text-slate-900">{user?.name || 'Farmer Dashboard'}</h1>
           </div>
 
           <div className="flex items-center gap-4">

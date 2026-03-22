@@ -2,8 +2,10 @@ import React, { useState, useEffect } from 'react';
 import { IndianRupee, FileText, CheckCircle, Clock, Bell, MapPin, ChevronRight, TrendingUp } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import axios from 'axios';
+import { useAuth } from '../../context/AuthContext';
 
 const DashboardOverview = () => {
+  const { user } = useAuth();
   const [data, setData] = useState({
     walletBalance: 0,
     orders: [],
@@ -46,7 +48,7 @@ const DashboardOverview = () => {
     <div className="space-y-10">
       <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
         <div>
-          <h2 className="text-4xl font-black text-slate-900 tracking-tighter">Your Progress</h2>
+          <h2 className="text-4xl font-black text-slate-900 tracking-tighter">Welcome, {user?.name || 'Farmer'}!</h2>
           <p className="text-slate-500 font-medium mt-1">Real-time overview of your agricultural trade and earnings.</p>
         </div>
         <div className="flex gap-2">
