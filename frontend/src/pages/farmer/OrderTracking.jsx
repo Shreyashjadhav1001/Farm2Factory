@@ -18,7 +18,7 @@ const OrderTracking = () => {
     setLoading(true);
     try {
       const token = localStorage.getItem('token');
-      const res = await axios.get('http://localhost:5000/api/farmer/dashboard', {
+      const res = await axios.get('https://farm2factory.onrender.com/api/farmer/dashboard', {
         headers: { Authorization: `Bearer ${token}` }
       });
       const orders = res.data.orders || [];
@@ -41,7 +41,7 @@ const OrderTracking = () => {
     setLoading(true);
     try {
       const token = localStorage.getItem('token');
-      await axios.put(`http://localhost:5000/api/farmer/contribution/update/${selectedOrder._id}`, {
+      await axios.put(`https://farm2factory.onrender.com/api/farmer/contribution/update/${selectedOrder._id}`, {
         quantity: parseFloat(contributionData.quantity),
         type: contributionData.type
       }, {
@@ -63,7 +63,7 @@ const OrderTracking = () => {
     setLoading(true);
     try {
       const token = localStorage.getItem('token');
-      await axios.put(`http://localhost:5000/api/farmer/contribution/update/${selectedOrder._id}`, {
+      await axios.put(`https://farm2factory.onrender.com/api/farmer/contribution/update/${selectedOrder._id}`, {
         quantity: 0,
         type: 'Pool' // Defaulting to Pool for custom 0 reset
       }, {
@@ -85,7 +85,7 @@ const OrderTracking = () => {
     setLoading(true);
     try {
       const token = localStorage.getItem('token');
-      await axios.delete(`http://localhost:5000/api/farmer/contribution/${id}`, {
+      await axios.delete(`https://farm2factory.onrender.com/api/farmer/contribution/${id}`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       alert('Order removed successfully!');
@@ -119,7 +119,7 @@ const OrderTracking = () => {
      try {
        const token = localStorage.getItem('token');
        const response = await axios({
-         url: `http://localhost:5000/api/farmer/agreement/${orderId}`,
+         url: `https://farm2factory.onrender.com/api/farmer/agreement/${orderId}`,
          method: 'GET',
          responseType: 'blob',
          headers: { Authorization: `Bearer ${token}` }

@@ -16,8 +16,8 @@ const WalletPage = () => {
       try {
         const token = localStorage.getItem('token');
         const [balanceRes, transRes] = await Promise.all([
-          axios.get('http://localhost:5000/api/wallet/balance', { headers: { Authorization: `Bearer ${token}` } }),
-          axios.get('http://localhost:5000/api/wallet/transactions', { headers: { Authorization: `Bearer ${token}` } })
+          axios.get('https://farm2factory.onrender.com/api/wallet/balance', { headers: { Authorization: `Bearer ${token}` } }),
+          axios.get('https://farm2factory.onrender.com/api/wallet/transactions', { headers: { Authorization: `Bearer ${token}` } })
         ]);
         setBalance(balanceRes.data.balance);
         setTransactions(transRes.data);
@@ -37,14 +37,14 @@ const WalletPage = () => {
     try {
       const token = localStorage.getItem('token');
       const endpoint = isDeposit ? 'add' : 'withdraw';
-      const res = await axios.post(`http://localhost:5000/api/wallet/${endpoint}`, 
+      const res = await axios.post(`https://farm2factory.onrender.com/api/wallet/${endpoint}`, 
         { amount: parseFloat(amount) },
         { headers: { Authorization: `Bearer ${token}` } }
       );
       setBalance(res.data.balance);
       setAmount('');
       // Refresh transactions
-      const transRes = await axios.get('http://localhost:5000/api/wallet/transactions', {
+      const transRes = await axios.get('https://farm2factory.onrender.com/api/wallet/transactions', {
         headers: { Authorization: `Bearer ${token}` }
       });
       setTransactions(transRes.data);

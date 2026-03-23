@@ -18,7 +18,7 @@ const DashboardOverview = () => {
     const fetchData = async () => {
       try {
         const token = localStorage.getItem('token');
-        const res = await axios.get('http://localhost:5000/api/farmer/dashboard', {
+        const res = await axios.get('https://farm2factory.onrender.com/api/farmer/dashboard', {
           headers: { Authorization: `Bearer ${token}` }
         });
         setData(res.data);

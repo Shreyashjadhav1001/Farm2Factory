@@ -25,7 +25,7 @@ const FarmerKYC = () => {
     const fetchUserData = async () => {
       try {
         const token = localStorage.getItem('token');
-        const res = await axios.get('http://localhost:5000/api/farmer/dashboard', {
+        const res = await axios.get('https://farm2factory.onrender.com/api/farmer/dashboard', {
           headers: { Authorization: `Bearer ${token}` }
         });
         
@@ -60,7 +60,7 @@ const FarmerKYC = () => {
     setError('');
     try {
       const token = localStorage.getItem('token');
-      const res = await axios.post('http://localhost:5000/api/farmer/kyc', formData, {
+      const res = await axios.post('https://farm2factory.onrender.com/api/farmer/kyc', formData, {
         headers: { Authorization: `Bearer ${token}` }
       });
       alert('KYC Details Saved Successfully!');

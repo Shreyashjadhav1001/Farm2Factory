@@ -20,7 +20,7 @@ const FarmProfile = () => {
     const fetchProfile = async () => {
       try {
         const token = localStorage.getItem('token');
-        const res = await axios.get('http://localhost:5000/api/farmer/farm-profile', {
+        const res = await axios.get('https://farm2factory.onrender.com/api/farmer/farm-profile', {
           headers: { Authorization: `Bearer ${token}` }
         });
         if (res.data) setProfile(res.data);
@@ -37,7 +37,7 @@ const FarmProfile = () => {
     e.preventDefault();
     try {
       const token = localStorage.getItem('token');
-      const res = await axios.put('http://localhost:5000/api/farmer/update-profile', profile, {
+      const res = await axios.put('https://farm2factory.onrender.com/api/farmer/update-profile', profile, {
         headers: { Authorization: `Bearer ${token}` }
       });
       setProfile(res.data);
