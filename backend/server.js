@@ -34,6 +34,19 @@ app.use('/api/farmer', farmerRoutes);
 app.use('/api/wallet', walletRoutes);
 app.use('/api/notifications', notificationRoutes);
 
+// Root Route
+app.get('/', (req, res) => {
+  res.status(200).json({
+    status: 'ok',
+    message: 'Farm2Factory Backend API is running.',
+    endpoints: {
+      health: '/api/health',
+      auth: '/api/auth',
+      orders: '/api/orders'
+    }
+  });
+});
+
 // Health Check Route
 app.get('/api/health', (req, res) => {
   res.status(200).json({ status: 'ok', message: 'Farm2Factory server is running.' });
