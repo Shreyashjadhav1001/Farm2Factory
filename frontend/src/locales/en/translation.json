@@ -5,7 +5,10 @@
     "orders": "My Orders",
     "wallet": "Wallet",
     "profile": "Profile",
-    "signOut": "Sign Out"
+    "signOut": "Sign Out",
+    "dashboard": "Dashboard",
+    "manageOrders": "Manage Orders",
+    "wishlist": "Wishlist"
   },
   "navbar": {
     "dashboard": "Dashboard",
@@ -128,7 +131,67 @@
     "loading": "Loading Profile..."
   },
   "kyc": {
-    "title": "KYC Verification",
-    "subtitle": "Complete your identity verification to unlock all features."
+    "title": "Complete Your KYC",
+    "subtitle": "Please provide accurate information for verification and secure payments.",
+    "identityBank": "Identity & Bank Details",
+    "fullName": "Full Name (As per Aadhar)",
+    "aadhar": "Aadhar Number",
+    "bankAccount": "Bank Account Number",
+    "ifsc": "IFSC Code",
+    "farmInfo": "Farm Information",
+    "farmLocation": "Farm Location",
+    "farmSize": "Farm Size (Acres)",
+    "submit": "Submit KYC Data",
+    "update": "Update KYC Details",
+    "processing": "Processing...",
+    "terms": "By clicking submit, you agree to our terms of data handling.",
+    "submittedStatus": "KYC Application Submitted",
+    "updateMsg": "You can update your details anytime before verification."
+  },
+  "login": {
+    "title": "Welcome Back",
+    "subtitle": "Login to your Farm2Factory account",
+    "email": "Email Address",
+    "password": "Password",
+    "submit": "Login",
+    "noAccount": "Don't have an account?",
+    "registerLink": "Register here",
+    "invalidCredentials": "Invalid email or password"
+  },
+  "register": {
+    "title": "Create Account",
+    "subtitle": "Join the Farm2Factory ecosystem",
+    "fullName": "Full Name",
+    "email": "Email",
+    "password": "Password",
+    "role": "Role",
+    "roleFarmer": "Farmer",
+    "roleFactory": "Factory Admin",
+    "location": "Location",
+    "locationPlaceholder": "City, State",
+    "submit": "Register",
+    "hasAccount": "Already have an account?",
+    "loginLink": "Login here",
+    "failed": "Registration failed"
+  },
+  "factory": {
+    "loading": "Loading Factory Dashboard...",
+    "overview": "Platform Overview",
+    "totalPurchased": "Total Purchased",
+    "activeDemands": "Active Demands",
+    "totalSpend": "Total Spend",
+    "postDemand": "Post New Demand",
+    "postSubtitle": "Broadcast your sugarcane requirements to all registered farmers in your zone instantly.",
+    "createDemand": "Create Demand",
+    "currentDemands": "Current Demands Progress",
+    "noDemands": "No active demands found",
+    "lockOrder": "Lock Order",
+    "createOrders": "Create Orders",
+    "startDispatch": "Start Dispatch",
+    "makePayment": "Make Payment",
+    "fulfilledLocked": "Fulfilled & Locked",
+    "progress": "Progress",
+    "fulfilled": "Fulfilled",
+    "target": "Target"
   }
 }

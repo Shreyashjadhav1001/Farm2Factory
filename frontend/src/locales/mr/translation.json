@@ -5,7 +5,9 @@
     "orders": "माझे ऑर्डर",
     "wallet": "पाकीट",
     "profile": "प्रोफाइल",
-    "signOut": "साइन आउट"
+    "signOut": "साइन आउट",
+    "manageOrders": "ऑर्डर व्यवस्थापित करा",
+    "wishlist": "विशलिस्ट"
   },
   "navbar": {
     "dashboard": "डॅशबोर्ड",
@@ -128,7 +130,67 @@
     "loading": "प्रोफाइल लोड होत आहे..."
   },
   "kyc": {
-    "title": "KYC पडताळणी",
-    "subtitle": "सर्व वैशिष्ट्ये अनलॉक करण्यासाठी ओळख पडताळणी पूर्ण करा."
+    "title": "तुमचा KYC पूर्ण करा",
+    "subtitle": "सत्यापन आणि सुरक्षित पेमेंटसाठी अचूक माहिती द्या.",
+    "identityBank": "ओळख आणि बँक तपशील",
+    "fullName": "पूर्ण नाव (आधारप्रमाणे)",
+    "aadhar": "आधार क्रमांक",
+    "bankAccount": "बँक खाते क्रमांक",
+    "ifsc": "IFSC कोड",
+    "farmInfo": "शेत माहिती",
+    "farmLocation": "शेत स्थान",
+    "farmSize": "शेताचा आकार (एकर)",
+    "submit": "KYC तपशील सादर करा",
+    "update": "KYC तपशील अपडेट करा",
+    "processing": "प्रक्रिया चालू आहे...",
+    "terms": "सबमिट करताना, तुम्ही आमच्या डेटा धोरणाशी सहमत आहात.",
+    "submittedStatus": "KYC अर्ज सादर केला",
+    "updateMsg": "पडताळणीपूर्वी कधीही तपशील अपडेट करा."
+  },
+  "login": {
+    "title": "परत स्वागत आहे",
+    "subtitle": "तुमच्या Farm2Factory खात्यात लॉगिन करा",
+    "email": "ईमेल पत्ता",
+    "password": "पासवर्ड",
+    "submit": "लॉगिन",
+    "noAccount": "खाते नाही?",
+    "registerLink": "इथे नोंदणी करा",
+    "invalidCredentials": "अवैध ईमेल किंवा पासवर्ड"
+  },
+  "register": {
+    "title": "खाते तयार करा",
+    "subtitle": "Farm2Factory इकोसिस्टेममध्ये सहभागी व्हा",
+    "fullName": "पूर्ण नाव",
+    "email": "ईमेल",
+    "password": "पासवर्ड",
+    "role": "भूमिका",
+    "roleFarmer": "शेतकरी",
+    "roleFactory": "कारखाना व्यवस्थापक",
+    "location": "स्थान",
+    "locationPlaceholder": "शहर, राज्य",
+    "submit": "नोंदणी करा",
+    "hasAccount": "आधीच खाते आहे?",
+    "loginLink": "इथे लॉगिन करा",
+    "failed": "नोंदणी अयशस्वी"
+  },
+  "factory": {
+    "loading": "कारखाना डॅशबोर्ड लोड होत आहे...",
+    "overview": "प्लॅटफॉर्म विहंगावलोकन",
+    "totalPurchased": "एकूण खरेदी",
+    "activeDemands": "सक्रिय मागण्या",
+    "totalSpend": "एकूण खर्च",
+    "postDemand": "नवीन मागणी पोस्ट करा",
+    "postSubtitle": "तुमच्या भागातील सर्व शेतकर्यांना तात्काळ उसाची आवश्यकता सांगा.",
+    "createDemand": "मागणी तयार करा",
+    "currentDemands": "सध्याच्या मागण्यांची प्रगती",
+    "noDemands": "कोणतीही सक्रिय मागणी नाही",
+    "lockOrder": "ऑर्डर लॉक करा",
+    "createOrders": "ऑर्डर तयार करा",
+    "startDispatch": "डिस्पॅच सुरू करा",
+    "makePayment": "पेमेंट करा",
+    "fulfilledLocked": "पूर्ण आणि लॉक",
+    "progress": "प्रगती",
+    "fulfilled": "पूर्ण",
+    "target": "उद्दिष्ट"
   }
 }

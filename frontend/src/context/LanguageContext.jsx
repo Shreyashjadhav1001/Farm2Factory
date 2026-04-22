@@ -1,26 +1,28 @@
 import React, { createContext, useState, useEffect } from 'react';
-import i18n from '../i18n';
+import i18n, { STORAGE_KEY } from '../i18n';
 
 export const LanguageContext = createContext();
 
 export const LanguageProvider = ({ children }) => {
-  const [currentLang, setCurrentLang] = useState(() => {
-    return localStorage.getItem('f2f_language') || 'en';
+  const [currentLang, setCurrentLangState] = useState(() => {
+    return localStorage.getItem(STORAGE_KEY) || 'en';
   });
 
-  const handleLangChange = (lang) => {
-    setCurrentLang(lang);
-    localStorage.setItem('f2f_language', lang);
-    i18n.changeLanguage(lang); // Sync i18next immediately
+  // Central function: updates state, localStorage, AND i18next simultaneously
+  const setCurrentLang = (lang) => {
+    setCurrentLangState(lang);
+    localStorage.setItem(STORAGE_KEY, lang);
+    i18n.changeLanguage(lang);
   };
 
-  // Sync i18next on mount in case localStorage had a saved language
+  // On mount, ensure i18next is synced with whatever was stored
   useEffect(() => {
-    i18n.changeLanguage(currentLang);
+    const stored = localStorage.getItem(STORAGE_KEY) || 'en';
+    i18n.changeLanguage(stored);
   }, []);
 
   return (
-    <LanguageContext.Provider value={{ currentLang, setCurrentLang: handleLangChange }}>
+    <LanguageContext.Provider value={{ currentLang, setCurrentLang }}>
       {children}
     </LanguageContext.Provider>
   );

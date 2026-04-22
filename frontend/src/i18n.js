@@ -2,7 +2,7 @@ import i18n from 'i18next';
 import { initReactI18next } from 'react-i18next';
 import LanguageDetector from 'i18next-browser-languagedetector';
 
-// Import all locale JSONs
+// Import all locale JSONs statically for best performance (no network latency)
 import enTranslation from './locales/en/translation.json';
 import hiTranslation from './locales/hi/translation.json';
 import mrTranslation from './locales/mr/translation.json';
@@ -13,6 +13,8 @@ import guTranslation from './locales/gu/translation.json';
 import paTranslation from './locales/pa/translation.json';
 import bnTranslation from './locales/bn/translation.json';
 import orTranslation from './locales/or/translation.json';
+
+const STORAGE_KEY = 'app_language';
 
 i18n
   .use(LanguageDetector)
@@ -30,16 +32,18 @@ i18n
       bn: { translation: bnTranslation },
       or: { translation: orTranslation },
     },
-    lng: localStorage.getItem('f2f_language') || 'en',
+    // Read persisted language from localStorage
+    lng: localStorage.getItem(STORAGE_KEY) || 'en',
     fallbackLng: 'en',
     interpolation: {
-      escapeValue: false,
+      escapeValue: false, // React already protects against XSS
     },
     detection: {
       order: ['localStorage'],
-      lookupLocalStorage: 'f2f_language',
+      lookupLocalStorage: STORAGE_KEY,
       caches: ['localStorage'],
     },
   });
 
+export { STORAGE_KEY };
 export default i18n;
