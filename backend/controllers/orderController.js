@@ -128,3 +128,109 @@ exports.updateParticipantStatus = async (req, res) => {
     res.status(500).json({ message: 'Server error', error: err.message });
   }
 };
+
+exports.createFromDemand = async (req, res) => {
+  try {
+    const { demandId } = req.params;
+    const demand = await Demand.findById(demandId);
+    if (!demand) return res.status(404).json({ message: 'Demand not found' });
+    if (demand.createdBy.toString() !== req.user.id) {
+      return res.status(403).json({ message: 'Unauthorized' });
+    }
+    
+    // Update all orders for this demand to ACCEPTED to formally "create" them from the locked demand.
+    // Also consider PENDING -> ACCEPTED.
+    await Order.updateMany(
+      { demandId, status: { $in: ['PENDING', 'ACCEPTED', 'PROCESSING'] } },
+      { status: 'ACCEPTED' }
+    );
+    
+    const orders = await Order.find({ demandId });
+    res.json({ message: 'Orders created/accepted successfully', orders });
+  } catch (err) {
+    res.status(500).json({ message: 'Server error', error: err.message });
+  }
+};
+
+exports.dispatchOrder = async (req, res) => {
+  try {
+    const { driverName, vehicleNumber, driverPhone, expectedDelivery } = req.body;
+    const order = await Order.findById(req.params.id).populate('demandId');
+    
+    if (!order) return res.status(404).json({ message: 'Order not found' });
+    if (order.demandId.createdBy.toString() !== req.user.id) {
+      return res.status(403).json({ message: 'Unauthorized' });
+    }
+    
+    order.status = 'DISPATCHED';
+    order.dispatchDetails = { 
+       driverName, 
+       vehicleNumber, 
+       driverPhone, 
+       expectedDelivery: expectedDelivery ? new Date(expectedDelivery) : new Date(Date.now() + 86400000) 
+    };
+    
+    await order.save();
+    res.json(order);
+  } catch (err) {
+    res.status(500).json({ message: 'Server error', error: err.message });
+  }
+};
+
+exports.deliverOrder = async (req, res) => {
+  try {
+    const order = await Order.findById(req.params.id).populate('demandId');
+    if (!order) return res.status(404).json({ message: 'Order not found' });
+    if (order.demandId.createdBy.toString() !== req.user.id) {
+      return res.status(403).json({ message: 'Unauthorized' });
+    }
+    
+    order.status = 'DELIVERED';
+    await order.save();
+    res.json(order);
+  } catch (err) {
+    res.status(500).json({ message: 'Server error', error: err.message });
+  }
+};
+
+const Wallet = require('../models/Wallet');
+const Transaction = require('../models/Transaction');
+
+exports.payOrder = async (req, res) => {
+  try {
+    const order = await Order.findById(req.params.id).populate('demandId');
+    if (!order) return res.status(404).json({ message: 'Order not found' });
+    if (order.demandId.createdBy.toString() !== req.user.id) {
+      return res.status(403).json({ message: 'Unauthorized' });
+    }
+    
+    if (order.paymentStatus === 'Paid') {
+      return res.status(400).json({ message: 'Order is already paid' });
+    }
+    
+    order.paymentStatus = 'Paid';
+    await order.save();
+    
+    const amount = order.quantity * order.demandId.ratePerTon;
+    let wallet = await Wallet.findOne({ userId: order.farmerId });
+    if (!wallet) {
+      wallet = new Wallet({ userId: order.farmerId, balance: 0 });
+    }
+    wallet.balance += amount;
+    await wallet.save();
+    
+    const transaction = new Transaction({
+      walletId: wallet._id,
+      userId: order.farmerId,
+      amount: amount,
+      type: 'credit',
+      description: `Payment for Order (Demand: ${order.demandId.title})`,
+      status: 'completed'
+    });
+    await transaction.save();
+    
+    res.json({ message: 'Payment successful', order });
+  } catch (err) {
+    res.status(500).json({ message: 'Server error', error: err.message });
+  }
+};

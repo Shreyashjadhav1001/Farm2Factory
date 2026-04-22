@@ -1,8 +1,6 @@
 import axios from 'axios';
 
-// baseURL is now centrally managed in main.jsx via axios.defaults.baseURL
-// but we keep the structure for compatibility if needed.
-const API_URL = axios.defaults.baseURL + '/api';
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
 
 const apiClient = axios.create({
   baseURL: API_URL,

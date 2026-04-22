@@ -2,12 +2,14 @@ import React, { useState, useEffect } from 'react';
 import { Truck, CheckCircle, Package, ArrowRight, Download, QrCode, User, Phone, MapPin, Calendar, CreditCard, FileText, ChevronDown, ChevronUp, Clock, ShieldCheck, Loader2, Users } from 'lucide-react';
 import apiClient from '../api/apiClient';
 import { jsPDF } from 'jspdf';
-import { dummyOrders } from '../data/dummyOrders';
 
 const OrderManagement = () => {
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
   const [expandedOrderId, setExpandedOrderId] = useState(null);
+  const [dispatchForm, setDispatchForm] = useState({
+    driverName: '', driverPhone: '', vehicleNumber: '', expectedDelivery: ''
+  });
 
   useEffect(() => {
     fetchOrders();
@@ -16,12 +18,10 @@ const OrderManagement = () => {
   const fetchOrders = async () => {
     try {
       const response = await apiClient.get('/orders/factory-orders');
-      // Merge real orders with dummy demo ones
-      setOrders([...response.data, ...dummyOrders]);
+      setOrders(response.data || []);
     } catch (err) {
       console.error('Error fetching orders:', err);
-      // Even if API fails, show dummy orders for demo
-      setOrders(dummyOrders);
+      setOrders([]);
     } finally {
       setLoading(false);
     }
@@ -29,13 +29,39 @@ const OrderManagement = () => {
 
   const updateStatus = async (orderId, newStatus) => {
     try {
-      // Don't update dummy orders on backend
-      if (orderId.toString().startsWith('ORD-')) return;
-      
       await apiClient.patch(`/orders/update-status/${orderId}`, { status: newStatus });
       fetchOrders();
     } catch (err) {
       alert('Failed to update status');
+    }
+  };
+
+  const handleStartDispatch = async (orderId) => {
+    if (!dispatchForm.driverName) return alert('Driver name is required.');
+    try {
+      await apiClient.post(`/orders/dispatch/${orderId}`, dispatchForm);
+      fetchOrders();
+    } catch (err) {
+      alert('Failed to start dispatch.');
+    }
+  };
+
+  const handleMarkDelivered = async (orderId) => {
+    try {
+      await apiClient.post(`/orders/deliver/${orderId}`);
+      fetchOrders();
+    } catch (err) {
+      alert('Failed to confirm receipt.');
+    }
+  };
+
+  const handleMakePayment = async (orderId) => {
+    try {
+      await apiClient.post(`/orders/pay/${orderId}`);
+      alert('Payment successful and Wallet Updated!');
+      fetchOrders();
+    } catch (err) {
+      alert(err.response?.data?.message || 'Failed to make payment.');
     }
   };
 
@@ -45,7 +71,7 @@ const OrderManagement = () => {
       'PENDING': 0, 'ACCEPTED': 0, 'PROCESSING': 1, 'Packed': 1, 'Processing': 1,
       'DISPATCHED': 2, 'Dispatched': 2,
       'IN_TRANSIT': 3, 'In Transit': 3,
-      'ARRIVED': 4, 'DELIVERED': 4, 'Delivered': 4
+      'ARRIVED': 4, 'DELIVERED': 5, 'Delivered': 5
     };
     return statusMap[status] !== undefined ? statusMap[status] : 0;
   };
@@ -125,7 +151,19 @@ const OrderManagement = () => {
           return (
             <div key={order._id} className={`bg-white rounded-3xl border transition-all duration-300 ${isExpanded ? 'shadow-2xl border-blue-400' : 'shadow-sm border-slate-100 hover:border-blue-200'}`}>
               {/* Header Card */}
-              <div className="p-6 md:p-8 cursor-pointer" onClick={() => setExpandedOrderId(isExpanded ? null : order._id)}>
+              <div className="p-6 md:p-8 cursor-pointer" onClick={() => {
+                  if (isExpanded) {
+                      setExpandedOrderId(null);
+                  } else {
+                      setExpandedOrderId(order._id);
+                      setDispatchForm({
+                          driverName: order.dispatchDetails?.driverName || '',
+                          vehicleNumber: order.dispatchDetails?.vehicleNumber || '',
+                          driverPhone: order.dispatchDetails?.driverPhone || '',
+                          expectedDelivery: order.dispatchDetails?.expectedDelivery ? new Date(order.dispatchDetails.expectedDelivery).toISOString().split('T')[0] : ''
+                      });
+                  }
+              }}>
                 <div className="flex flex-col lg:flex-row justify-between lg:items-center gap-6">
                   <div className="flex items-start space-x-5">
                     <div className={`p-4 rounded-2xl ${getStatusColor(order.status).replace('text-', 'bg-').split(' ')[1].replace('bg-', 'bg-opacity-20 bg-')}`}>
@@ -134,7 +172,6 @@ const OrderManagement = () => {
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center space-x-3 mb-1">
                         <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest bg-slate-100 px-2 py-0.5 rounded">#{order._id.slice(-8)}</span>
-                        {order.isDummy && <span className="text-[10px] font-black text-blue-600 uppercase tracking-widest bg-blue-50 px-2 py-0.5 rounded border border-blue-100">Live Demo</span>}
                       </div>
                       <h3 className="text-xl font-black text-slate-900 truncate">{order.demandId?.title || 'Direct Procurement'}</h3>
                       <p className="text-slate-500 font-medium flex items-center mt-1">
@@ -166,21 +203,23 @@ const OrderManagement = () => {
                   </div>
                 </div>
 
-                {/* Tracking Timeline Bar */}
-                <div className="mt-10 px-4">
-                  <div className="relative flex justify-between items-center">
-                    {steps.map((step, idx) => (
-                      <div key={idx} className="flex flex-col items-center relative z-10">
-                        <div className={`w-10 h-10 rounded-full flex items-center justify-center transition-all duration-500 border-4 border-white ${idx <= currentStep ? 'bg-blue-600 text-white shadow-xl shadow-blue-200 scale-110' : 'bg-slate-100 text-slate-300'}`}>
-                          {idx < currentStep ? <CheckCircle className="h-5 w-5" /> : (idx === currentStep ? <Clock className="h-5 w-5 animate-pulse" /> : <Package className="h-4 w-4" />)}
-                        </div>
-                        <span className={`text-[10px] font-black mt-3 uppercase tracking-tighter ${idx <= currentStep ? 'text-slate-900' : 'text-slate-300'}`}>{step}</span>
-                      </div>
-                    ))}
-                    <div className="absolute top-5 left-0 w-full h-1 bg-slate-100 -z-0 rounded-full"></div>
-                    <div className="absolute top-5 left-0 h-1 bg-blue-600 transition-all duration-1000 -z-0 rounded-full shadow-sm" style={{ width: `${(currentStep / (steps.length - 1)) * 100}%` }}></div>
-                  </div>
-                </div>
+                 {/* Tracking Timeline Bar */}
+                 <div className="mt-10 px-4 overflow-hidden relative">
+                   <div className="relative flex justify-between items-center w-full box-border">
+                     {/* Bounded tracking line container */}
+                     <div className="absolute top-5 left-0 right-0 h-1 bg-slate-100 -z-0 rounded-full overflow-hidden">
+                       <div className="h-full bg-blue-600 transition-all duration-1000 rounded-full shadow-sm" style={{ width: `${Math.min((currentStep / (steps.length - 1)) * 100, 100)}%` }}></div>
+                     </div>
+                     {steps.map((step, idx) => (
+                       <div key={idx} className="flex flex-col items-center relative z-10">
+                         <div className={`w-10 h-10 rounded-full flex items-center justify-center transition-all duration-500 border-4 border-white ${idx <= currentStep ? 'bg-blue-600 text-white shadow-xl shadow-blue-200 scale-110' : 'bg-slate-100 text-slate-300'}`}>
+                           {idx < currentStep ? <CheckCircle className="h-5 w-5" /> : (idx === currentStep ? <Clock className="h-5 w-5 animate-pulse" /> : <Package className="h-4 w-4" />)}
+                         </div>
+                         <span className={`text-[10px] font-black mt-3 uppercase tracking-tighter ${idx <= currentStep ? 'text-slate-900' : 'text-slate-300'}`}>{step}</span>
+                       </div>
+                     ))}
+                   </div>
+                 </div>
               </div>
 
               {/* Expanded Detail View */}
@@ -212,30 +251,61 @@ const OrderManagement = () => {
                         <Truck className="h-4 w-4 text-emerald-600" />
                         <span>Logistics Pipeline</span>
                       </div>
-                      <div className="bg-slate-50 p-5 rounded-2xl border border-slate-100 space-y-4">
-                        <div className="flex justify-between items-start">
-                          <div>
-                            <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Driver</p>
-                            <p className="text-sm font-bold text-slate-900">{order.dispatchDetails?.driverName || 'Assigning Driver...'}</p>
+                      <div className="bg-slate-50 p-5 rounded-2xl border border-slate-100">
+                        {/* Status Check -> Render Form or Display */}
+                        {(order.status === 'ACCEPTED' || order.status === 'PROCESSING' || order.status === 'PENDING') ? (
+                          <div className="space-y-4">
+                             <h4 className="text-sm font-bold text-slate-900 border-b pb-2 mb-2">1. Setup Dispatch & Logistics</h4>
+                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div>
+                                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1 block">Driver Name</label>
+                                    <input value={dispatchForm.driverName} onChange={e => setDispatchForm({...dispatchForm, driverName: e.target.value})} className="w-full px-3 py-2 border border-slate-200 rounded-xl text-sm outline-none focus:border-blue-400" />
+                                </div>
+                                <div>
+                                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1 block">Driver Phone</label>
+                                    <input value={dispatchForm.driverPhone} onChange={e => setDispatchForm({...dispatchForm, driverPhone: e.target.value})} className="w-full px-3 py-2 border border-slate-200 rounded-xl text-sm outline-none focus:border-blue-400" />
+                                </div>
+                                <div>
+                                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1 block">Vehicle Number</label>
+                                    <input value={dispatchForm.vehicleNumber} onChange={e => setDispatchForm({...dispatchForm, vehicleNumber: e.target.value})} className="w-full px-3 py-2 border border-slate-200 rounded-xl text-sm outline-none focus:border-blue-400" />
+                                </div>
+                                <div>
+                                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1 block">Expected Arrival</label>
+                                    <input type="date" value={dispatchForm.expectedDelivery} onChange={e => setDispatchForm({...dispatchForm, expectedDelivery: e.target.value})} className="w-full px-3 py-2 border border-slate-200 rounded-xl text-sm outline-none focus:border-blue-400" />
+                                </div>
+                             </div>
+                             <div className="pt-2">
+                                <button onClick={(e) => { e.stopPropagation(); handleStartDispatch(order._id); }} className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded-xl shadow-lg transition">Save & Mark Dispatched</button>
+                             </div>
                           </div>
-                          <div>
-                            <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Vehicle</p>
-                            <p className="text-sm font-bold text-slate-900 px-2 py-0.5 bg-slate-200 rounded">{order.dispatchDetails?.vehicleNumber || 'Pending'}</p>
+                        ) : (
+                          <div className="space-y-4">
+                             <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 p-4 bg-white rounded-xl shadow-sm border border-slate-100">
+                               <div><p className="text-[10px] uppercase font-black text-slate-400">Driver</p><p className="text-sm font-bold text-slate-900">{order.dispatchDetails?.driverName || 'N/A'}</p></div>
+                               <div><p className="text-[10px] uppercase font-black text-slate-400">Phone</p><p className="text-sm font-bold text-slate-900">{order.dispatchDetails?.driverPhone || 'N/A'}</p></div>
+                               <div><p className="text-[10px] uppercase font-black text-slate-400">Vehicle</p><p className="text-sm font-bold text-slate-900 px-2 py-0.5 bg-slate-100 rounded inline-block">{order.dispatchDetails?.vehicleNumber || 'N/A'}</p></div>
+                               <div><p className="text-[10px] uppercase font-black text-slate-400">Expected</p><p className="text-sm font-bold text-slate-900">{order.dispatchDetails?.expectedDelivery ? new Date(order.dispatchDetails.expectedDelivery).toLocaleDateString() : 'N/A'}</p></div>
+                             </div>
+                             
+                             <div className="pt-4 border-t border-slate-200 flex flex-wrap gap-3">
+                               {order.status === 'DISPATCHED' && (
+                                   <button onClick={(e) => { e.stopPropagation(); updateStatus(order._id, 'IN_TRANSIT'); }} className="flex-1 px-4 py-3 bg-blue-100 hover:bg-blue-200 text-blue-700 font-bold rounded-xl transition text-sm">Mark In-Transit</button>
+                               )}
+                               {order.status === 'IN_TRANSIT' && (
+                                   <button onClick={(e) => { e.stopPropagation(); updateStatus(order._id, 'ARRIVED'); }} className="flex-1 px-4 py-3 bg-amber-100 hover:bg-amber-200 text-amber-700 font-bold rounded-xl transition text-sm">Mark Arrived</button>
+                               )}
+                               {order.status === 'ARRIVED' && (
+                                   <button onClick={(e) => { e.stopPropagation(); handleMarkDelivered(order._id); }} className="flex-1 px-4 py-3 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl shadow-lg shadow-emerald-200 transition text-sm">Confirm Factory Receipt</button>
+                               )}
+                               {order.status === 'DELIVERED' && (
+                                   <div className="w-full px-4 py-3 bg-emerald-50 text-emerald-600 rounded-xl font-bold text-xs flex justify-center items-center border border-emerald-100">
+                                      <CheckCircle className="h-4 w-4 mr-2" />
+                                      Receipt Confirmed (Proceed to Financial Summary)
+                                   </div>
+                               )}
+                             </div>
                           </div>
-                        </div>
-                        <div>
-                          <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Contact</p>
-                          <p className="text-sm font-bold text-indigo-600 flex items-center">
-                            <Phone className="h-3 w-3 mr-1" />
-                            {order.dispatchDetails?.driverPhone || 'No contact yet'}
-                          </p>
-                        </div>
-                        <div className="pt-3 border-t border-slate-200">
-                           <div className="flex items-center text-xs text-slate-500">
-                              <Calendar className="h-3 w-3 mr-2" />
-                              Expected: {order.dispatchDetails?.expectedDelivery ? new Date(order.dispatchDetails.expectedDelivery).toLocaleDateString() : 'TBD'}
-                           </div>
-                        </div>
+                        )}
                       </div>
                     </div>
 
@@ -260,6 +330,16 @@ const OrderManagement = () => {
                            <span className="text-slate-900 font-black">Balance Due</span>
                            <span className="font-black text-red-600 text-base">₹{(totalAmount - (order.paymentDetails?.preOrderAmount || 0)).toLocaleString()}</span>
                         </div>
+                        {order.paymentStatus !== 'Paid' && order.status === 'DELIVERED' && (
+                          <div className="pt-2">
+                            <button 
+                              onClick={(e) => { e.stopPropagation(); handleMakePayment(order._id); }}
+                              className="w-full py-2 bg-amber-500 hover:bg-amber-600 text-white font-bold rounded-lg shadow uppercase tracking-wider text-xs"
+                            >
+                              Pay Remaining Balance
+                            </button>
+                          </div>
+                        )}
                         
                         <div className="pt-4 flex gap-2">
                           <button 

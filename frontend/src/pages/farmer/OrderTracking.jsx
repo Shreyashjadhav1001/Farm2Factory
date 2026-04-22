@@ -50,6 +50,26 @@ const OrderTracking = () => {
     }
   };
 
+  // Merged from origin/main: allows resetting contribution to 0
+  const handleResetContribution = async () => {
+    if (!window.confirm("Are you sure you want to reset your contribution? This will set your commitment to 0.")) return;
+    setLoading(true);
+    try {
+      const token = localStorage.getItem('token');
+      await axios.put(`/api/farmer/contribution/update/${selectedOrder._id}`, {
+        quantity: 0,
+        type: 'Pool'
+      }, { headers: { Authorization: `Bearer ${token}` } });
+      alert('Contribution reset successfully!');
+      setIsEditModalOpen(false);
+      fetchOrders();
+    } catch (err) {
+      alert(err.response?.data?.message || 'Error resetting contribution');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const handleRemoveContribution = async (id) => {
     if (!window.confirm("Are you sure you want to remove this inactive order?")) return;
     setLoading(true);
@@ -104,6 +124,18 @@ const OrderTracking = () => {
       default:          return 'bg-amber-50';
     }
   };
+
+  // Granular 6-step progress tracker from origin/main
+  const shipmentSteps = [
+    { title: 'Order Accepted',   subtitle: 'Factory Confirmation', stat: 'ACCEPTED',   lvl: 1 },
+    { title: 'Processing',       subtitle: 'Preparing to Pack',    stat: 'PROCESSING',  lvl: 2 },
+    { title: 'Dispatched',       subtitle: 'Driver Assigned',      stat: 'DISPATCHED',  lvl: 3 },
+    { title: 'In Transit',       subtitle: 'On the way',           stat: 'IN_TRANSIT',  lvl: 4 },
+    { title: 'Arrived',          subtitle: 'Reached Factory',      stat: 'ARRIVED',     lvl: 5 },
+    { title: 'Delivered',        subtitle: 'Completed & Checked',  stat: 'DELIVERED',   lvl: 6 },
+  ];
+
+  const statusLevelMap = { 'PENDING': 0, 'ACCEPTED': 1, 'PROCESSING': 2, 'DISPATCHED': 3, 'IN_TRANSIT': 4, 'ARRIVED': 5, 'DELIVERED': 6 };
 
   const safeOrders = Array.isArray(orders) ? orders : [];
 
@@ -206,24 +238,25 @@ const OrderTracking = () => {
               </div>
 
               <div className="p-10 grid grid-cols-1 md:grid-cols-2 gap-12 text-left">
+                {/* Granular 6-step progress tracker (from origin/main) */}
                 <div className="space-y-8">
                   <h4 className="text-sm font-black text-slate-400 uppercase tracking-widest flex items-center gap-2">
                     <Clock size={16} /> {t('orders.shipmentProgress')}
                   </h4>
-                  <div className="space-y-10 relative before:absolute before:left-[11px] before:top-2 before:bottom-2 before:w-0.5 before:bg-slate-100">
-                    {[
-                      { statuses: ['PENDING','ACCEPTED','SHIPPED','DELIVERED'], label: t('orders.orderPlaced'), sub: t('orders.awaitingApproval') },
-                      { statuses: ['SHIPPED','DELIVERED'],                      label: t('orders.dispatched'),   sub: t('orders.inTransit') },
-                      { statuses: ['DELIVERED'],                                label: t('orders.deliveryConfirmed'), sub: t('orders.qualityCheck') },
-                    ].map(({ statuses, label, sub }, i) => (
-                      <div key={i} className="relative pl-10">
-                        <div className={`absolute left-0 top-1 w-6 h-6 rounded-full border-4 border-white shadow-md z-10 ${statuses.includes(selectedOrder.status) ? 'bg-emerald-500' : 'bg-slate-200'}`}></div>
-                        <div className="flex flex-col">
-                          <span className="font-bold text-slate-900">{label}</span>
-                          <span className="text-xs font-bold text-slate-400 uppercase tracking-widest mt-1">{sub}</span>
+                  <div className="space-y-6 relative before:absolute before:left-[11px] before:top-2 before:bottom-2 before:w-0.5 before:bg-slate-100">
+                    {shipmentSteps.map((step, idx) => {
+                      const currentLvl = statusLevelMap[selectedOrder.status] || 0;
+                      const isAchieved = currentLvl >= step.lvl;
+                      return (
+                        <div key={idx} className="relative pl-10">
+                          <div className={`absolute left-0 top-1 w-6 h-6 rounded-full border-4 border-white shadow-md z-10 transition-colors ${isAchieved ? 'bg-emerald-500' : 'bg-slate-200'}`}></div>
+                          <div className="flex flex-col">
+                            <span className={`font-bold ${isAchieved ? 'text-slate-900' : 'text-slate-400'}`}>{step.title}</span>
+                            <span className="text-xs font-bold text-slate-400 uppercase tracking-widest mt-1">{step.subtitle}</span>
+                          </div>
                         </div>
-                      </div>
-                    ))}
+                      );
+                    })}
                   </div>
                 </div>
 
