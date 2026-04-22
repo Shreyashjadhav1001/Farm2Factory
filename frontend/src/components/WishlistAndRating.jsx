@@ -1,12 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { Star, User, Heart, ChevronRight, Settings, Trash2, CreditCard, Receipt, Search, Filter, CheckCircle, Clock, Download, X, QrCode, AlertCircle, TrendingUp, DollarSign, ArrowRight, FileText, MapPin, Users, Loader2 } from 'lucide-react';
 import apiClient from '../api/apiClient';
-import { dummyFarmers } from '../data/dummyFarmers';
-import { dummyOrders } from '../data/dummyOrders';
 
 const WishlistAndRating = () => {
   const [activeTab, setActiveTab] = useState('suppliers');
-  const [farmers, setFarmers] = useState(dummyFarmers);
+  const [farmers, setFarmers] = useState([]);
   const [transactions, setTransactions] = useState([]);
   const [loading, setLoading] = useState(true);
   const [isRatingModalOpen, setIsRatingModalOpen] = useState(false);
@@ -29,42 +27,23 @@ const WishlistAndRating = () => {
       }
       
       const ordersRes = await apiClient.get('/orders/factory-orders');
-      const allOrders = [...ordersRes.data, ...dummyOrders];
+      const allOrders = ordersRes.data || [];
       
-      // Generate dynamic transactions from all orders to ensure 100% consistency
-      const generatedTxns = [];
-      allOrders.forEach(order => {
+      const realTxns = allOrders.map(order => {
         const totalAmount = order.quantity * (order.demandId?.ratePerTon || 0);
-        if (totalAmount <= 0) return;
-
-        const orderId = order._id;
-        const farmerName = order.farmerId?.name || "Farmer";
-        
-        // 20% Advance - Usually marked as Completed in demo to show history
-        generatedTxns.push({
-          _id: `ADV-${orderId.slice(-6)}`,
-          orderId,
-          farmerName,
-          amount: Math.round(totalAmount * 0.2),
-          date: new Date(order.createdAt || Date.now()).toLocaleDateString(),
-          status: 'Completed',
-          type: "Advance Payment (20%)"
-        });
-
-        // 80% Final / Balance - Can be Pending or Completed based on order status
-        generatedTxns.push({
-          _id: `BAL-${orderId.slice(-6)}`,
-          orderId,
-          farmerName,
-          amount: Math.round(totalAmount * 0.8),
-          date: new Date(order.updatedAt || Date.now()).toLocaleDateString(),
-          status: order.status === 'DELIVERED' || order.status === 'Delivered' || order.paymentStatus === 'Paid' ? 'Completed' : 'Pending',
-          type: "Final Settlement (80%)"
-        });
+        return {
+          _id: order._id,
+          orderId: order._id,
+          farmerName: order.farmerId?.name || "Assigned Farmer",
+          amount: totalAmount,
+          date: new Date(order.updatedAt || order.createdAt).toLocaleDateString(),
+          status: order.paymentStatus === 'Paid' ? 'Completed' : 'Pending',
+          type: "Order Settlement"
+        };
       });
 
       // Sort by date descending
-      setTransactions(generatedTxns.sort((a, b) => new Date(b.date) - new Date(a.date)));
+      setTransactions(realTxns.sort((a, b) => new Date(b.date) - new Date(a.date)));
     } catch (err) {
       console.error('Error fetching data:', err);
     } finally {
@@ -367,8 +346,7 @@ const WishlistAndRating = () => {
                       <p className="text-slate-500 mt-2">Funds have been successfully transferred to the supplier's verified bank account.</p>
                       <button 
                         onClick={() => {
-                            const updated = transactions.map(t => t._id === selectedTxn._id ? {...t, status: 'Completed'} : t);
-                            setTransactions(updated);
+                            fetchData();
                             setIsPaymentModalOpen(false);
                         }}
                         className="mt-8 px-8 py-3 bg-slate-900 text-white rounded-xl font-bold hover:bg-slate-800 transition"
@@ -392,10 +370,17 @@ const WishlistAndRating = () => {
                        </div>
                        
                        <button 
-                        onClick={() => setPaymentDone(true)}
+                        onClick={async () => {
+                           try {
+                             await apiClient.post(`/orders/pay/${selectedTxn.orderId}`);
+                             setPaymentDone(true);
+                           } catch (err) {
+                             alert(err.response?.data?.message || 'Payment failed.');
+                           }
+                        }}
                         className="w-full py-4 bg-emerald-600 hover:bg-emerald-700 text-white rounded-2xl font-black shadow-xl shadow-emerald-100 transition active:scale-95"
                        >
-                         Release Payment Now
+                         Release Real Payment
                        </button>
                     </div>
                   </>

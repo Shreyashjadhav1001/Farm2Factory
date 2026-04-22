@@ -18,7 +18,7 @@ const OrderTracking = () => {
     setLoading(true);
     try {
       const token = localStorage.getItem('token');
-      const res = await axios.get('https://farm2factory.onrender.com/api/farmer/dashboard', {
+      const res = await axios.get('http://localhost:5000/api/farmer/dashboard', {
         headers: { Authorization: `Bearer ${token}` }
       });
       const orders = res.data.orders || [];
@@ -41,7 +41,7 @@ const OrderTracking = () => {
     setLoading(true);
     try {
       const token = localStorage.getItem('token');
-      await axios.put(`https://farm2factory.onrender.com/api/farmer/contribution/update/${selectedOrder._id}`, {
+      await axios.put(`http://localhost:5000/api/farmer/contribution/update/${selectedOrder._id}`, {
         quantity: parseFloat(contributionData.quantity),
         type: contributionData.type
       }, {
@@ -63,7 +63,7 @@ const OrderTracking = () => {
     setLoading(true);
     try {
       const token = localStorage.getItem('token');
-      await axios.put(`https://farm2factory.onrender.com/api/farmer/contribution/update/${selectedOrder._id}`, {
+      await axios.put(`http://localhost:5000/api/farmer/contribution/update/${selectedOrder._id}`, {
         quantity: 0,
         type: 'Pool' // Defaulting to Pool for custom 0 reset
       }, {
@@ -85,7 +85,7 @@ const OrderTracking = () => {
     setLoading(true);
     try {
       const token = localStorage.getItem('token');
-      await axios.delete(`https://farm2factory.onrender.com/api/farmer/contribution/${id}`, {
+      await axios.delete(`http://localhost:5000/api/farmer/contribution/${id}`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       alert('Order removed successfully!');
@@ -119,7 +119,7 @@ const OrderTracking = () => {
      try {
        const token = localStorage.getItem('token');
        const response = await axios({
-         url: `https://farm2factory.onrender.com/api/farmer/agreement/${orderId}`,
+         url: `http://localhost:5000/api/farmer/agreement/${orderId}`,
          method: 'GET',
          responseType: 'blob',
          headers: { Authorization: `Bearer ${token}` }
@@ -286,27 +286,27 @@ const OrderTracking = () => {
                       <Clock size={16} /> Shipment Progress
                     </h4>
                     <div className="space-y-10 relative before:absolute before:left-[11px] before:top-2 before:bottom-2 before:w-0.5 before:bg-slate-100">
-                       <div className="relative pl-10">
-                          <div className={`absolute left-0 top-1 w-6 h-6 rounded-full border-4 border-white shadow-md z-10 ${['PENDING', 'ACCEPTED', 'SHIPPED', 'DELIVERED'].includes(selectedOrder.status) ? 'bg-emerald-500' : 'bg-slate-200'}`}></div>
-                          <div className="flex flex-col">
-                             <span className="font-bold text-slate-900">Order Placed</span>
-                             <span className="text-xs font-bold text-slate-400 uppercase tracking-widest mt-1">Awaiting Factory Approval</span>
-                          </div>
-                       </div>
-                       <div className="relative pl-10">
-                          <div className={`absolute left-0 top-1 w-6 h-6 rounded-full border-4 border-white shadow-md z-10 ${['SHIPPED', 'DELIVERED'].includes(selectedOrder.status) ? 'bg-emerald-500' : 'bg-slate-200'}`}></div>
-                          <div className="flex flex-col">
-                             <span className="font-bold text-slate-900">Dispatched</span>
-                             <span className="text-xs font-bold text-slate-400 uppercase tracking-widest mt-1">In Transit to Factory</span>
-                          </div>
-                       </div>
-                       <div className="relative pl-10">
-                          <div className={`absolute left-0 top-1 w-6 h-6 rounded-full border-4 border-white shadow-md z-10 ${selectedOrder.status === 'DELIVERED' ? 'bg-emerald-500' : 'bg-slate-200'}`}></div>
-                          <div className="flex flex-col">
-                             <span className="font-bold text-slate-900">Delivery Confirmed</span>
-                             <span className="text-xs font-bold text-slate-400 uppercase tracking-widest mt-1">Quality Check & Weighing</span>
-                          </div>
-                       </div>
+                       {[
+                         { title: 'Order Accepted', subtitle: 'Factory Confirmation', stat: 'ACCEPTED', lvl: 1 },
+                         { title: 'Processing', subtitle: 'Preparing to Pack', stat: 'PROCESSING', lvl: 2 },
+                         { title: 'Dispatched', subtitle: 'Driver Assigned', stat: 'DISPATCHED', lvl: 3 },
+                         { title: 'In Transit', subtitle: 'On the way', stat: 'IN_TRANSIT', lvl: 4 },
+                         { title: 'Arrived', subtitle: 'Reached Factory', stat: 'ARRIVED', lvl: 5 },
+                         { title: 'Delivered', subtitle: 'Completed & Checked', stat: 'DELIVERED', lvl: 6 },
+                       ].map((step, idx) => {
+                           const statusMap = { 'PENDING': 0, 'ACCEPTED': 1, 'PROCESSING': 2, 'DISPATCHED': 3, 'IN_TRANSIT': 4, 'ARRIVED': 5, 'DELIVERED': 6 };
+                           const currentLvl = statusMap[selectedOrder.status] || 0;
+                           const isAchieved = currentLvl >= step.lvl;
+                           return (
+                             <div key={idx} className="relative pl-10">
+                                <div className={`absolute left-0 top-1 w-6 h-6 rounded-full border-4 border-white shadow-md z-10 transition-colors ${isAchieved ? 'bg-emerald-500' : 'bg-slate-200'}`}></div>
+                                <div className="flex flex-col">
+                                   <span className={`font-bold ${isAchieved ? 'text-slate-900' : 'text-slate-400'}`}>{step.title}</span>
+                                   <span className="text-xs font-bold text-slate-400 uppercase tracking-widest mt-1">{step.subtitle}</span>
+                                </div>
+                             </div>
+                           );
+                       })}
                     </div>
                   </div>
 

@@ -90,6 +90,20 @@ const FactoryDashboard = () => {
     }
   };
 
+  const handleCreateOrders = async (demandId) => {
+    try {
+      await apiClient.post(`/orders/create-from-demand/${demandId}`);
+      alert('Orders successfully established! Check Manage Orders tab.');
+      setActiveTab('orders');
+    } catch (err) {
+      alert('Failed to create orders');
+    }
+  };
+
+  const handleNavigateToOrders = () => {
+    setActiveTab('orders');
+  };
+
   const handleLogout = () => {
     logout();
     navigate('/login');
@@ -210,13 +224,15 @@ const FactoryDashboard = () => {
                                     Lock Order
                                   </button>
                                 )}
-                                <button 
-                                  onClick={() => handleDeleteDemand(demand._id)}
-                                  className="p-2 text-slate-400 hover:text-red-500 transition-colors"
-                                  title="Delete Demand"
-                                >
-                                  <Trash2 className="h-5 w-5" />
-                                </button>
+                                {!isLocked && (
+                                  <button 
+                                    onClick={() => handleDeleteDemand(demand._id)}
+                                    className="p-2 text-slate-400 hover:text-red-500 transition-colors"
+                                    title="Delete Demand"
+                                  >
+                                    <Trash2 className="h-5 w-5" />
+                                  </button>
+                                )}
                                 {!isLocked && (
                                   <button 
                                     onClick={() => handleEditDemand(demand)}
@@ -226,6 +242,7 @@ const FactoryDashboard = () => {
                                     <Edit3 className="h-5 w-5" />
                                   </button>
                                 )}
+                                
                                 <button 
                                   onClick={() => handleViewParticipants(demand)}
                                   className="p-2 text-slate-400 hover:text-emerald-500 transition-colors"
@@ -233,6 +250,32 @@ const FactoryDashboard = () => {
                                 >
                                   <Users className="h-5 w-5" />
                                 </button>
+                                
+                                {isLocked && (
+                                  <>
+                                    <button 
+                                      onClick={() => handleCreateOrders(demand._id)}
+                                      className="px-3 py-1 text-xs font-bold text-white bg-blue-600 rounded-lg hover:bg-blue-700 shadow-sm"
+                                      title="Create Orders"
+                                    >
+                                      Create Orders
+                                    </button>
+                                    <button 
+                                      onClick={handleNavigateToOrders}
+                                      className="px-3 py-1 text-xs font-bold text-white bg-emerald-600 rounded-lg hover:bg-emerald-700 shadow-sm"
+                                      title="Start Dispatch"
+                                    >
+                                      Start Dispatch
+                                    </button>
+                                    <button 
+                                      onClick={handleNavigateToOrders}
+                                      className="px-3 py-1 text-xs font-bold text-slate-800 bg-amber-400 rounded-lg hover:bg-amber-500 shadow-sm"
+                                      title="Make Payment"
+                                    >
+                                      Make Payment
+                                    </button>
+                                  </>
+                                )}
                               </div>
                           </div>
 
