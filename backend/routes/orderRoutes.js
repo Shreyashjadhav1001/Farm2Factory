@@ -5,7 +5,11 @@ const {
   updateOrderStatus, 
   joinDemand, 
   getParticipants, 
-  updateParticipantStatus 
+  updateParticipantStatus,
+  createFromDemand,
+  dispatchOrder,
+  deliverOrder,
+  payOrder
 } = require('../controllers/orderController');
 const { protect, roleMiddleware } = require('../middleware/authMiddleware');
 
@@ -19,5 +23,9 @@ router.get('/factory-orders', roleMiddleware(['factory']), getFactoryOrders);
 router.patch('/update-status/:id', roleMiddleware(['factory']), updateOrderStatus);
 router.get('/participants/:demandId', roleMiddleware(['factory']), getParticipants);
 router.patch('/update-participant-status/:id', roleMiddleware(['factory']), updateParticipantStatus);
+router.post('/create-from-demand/:demandId', roleMiddleware(['factory']), createFromDemand);
+router.post('/dispatch/:id', roleMiddleware(['factory']), dispatchOrder);
+router.post('/deliver/:id', roleMiddleware(['factory']), deliverOrder);
+router.post('/pay/:id', roleMiddleware(['factory']), payOrder);
 
 module.exports = router;
