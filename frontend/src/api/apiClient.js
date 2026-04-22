@@ -1,6 +1,8 @@
 import axios from 'axios';
 
-const API_URL = 'https://farm2factory.onrender.com/api';
+// baseURL is now centrally managed in main.jsx via axios.defaults.baseURL
+// but we keep the structure for compatibility if needed.
+const API_URL = axios.defaults.baseURL + '/api';
 
 const apiClient = axios.create({
   baseURL: API_URL,
