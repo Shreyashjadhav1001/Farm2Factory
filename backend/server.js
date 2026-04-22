@@ -1,6 +1,6 @@
+require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
-const dotenv = require('dotenv');
 const connectDB = require('./config/db');
 
 // Route Imports
@@ -12,8 +12,7 @@ const wishlistRoutes = require('./routes/wishlistRoutes');
 const farmerRoutes = require('./routes/farmerRoutes');
 const walletRoutes = require('./routes/walletRoutes');
 const notificationRoutes = require('./routes/notificationRoutes');
-
-dotenv.config();
+const translateRoutes = require('./routes/translateRoutes');
 
 // Connect to database
 connectDB();
@@ -21,7 +20,11 @@ connectDB();
 const app = express();
 const PORT = process.env.PORT || 5000;
 
-app.use(cors());
+// FIX 4: Secure CORS configuration
+app.use(cors({
+  origin: 'http://localhost:5173',
+  credentials: true
+}));
 app.use(express.json());
 
 // Routes
@@ -33,6 +36,7 @@ app.use('/api/wishlist', wishlistRoutes);
 app.use('/api/farmer', farmerRoutes);
 app.use('/api/wallet', walletRoutes);
 app.use('/api/notifications', notificationRoutes);
+app.use('/api/translate', translateRoutes);
 
 // Root Route
 app.get('/', (req, res) => {

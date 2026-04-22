@@ -13,23 +13,39 @@ import {
   LogOut,
   Sprout
 } from 'lucide-react';
+import { useTranslate } from '../hooks/useTranslate';
+import LanguageSwitcher from '../components/LanguageSwitcher';
 
 const FarmerLayout = () => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = React.useState(false);
   const location = useLocation();
 
-  const navItems = [
-    { name: 'Dashboard', path: '/farmer/dashboard', icon: <LayoutDashboard size={20} /> },
-    { name: 'Factory Demands', path: '/farmer/demands', icon: <Search size={20} /> },
-    { name: 'My Contributions', path: '/farmer/contributions', icon: <FileText size={20} /> },
-    { name: 'Orders Tracking', path: '/farmer/orders', icon: <Map size={20} /> },
-    { name: 'Earnings & Payments', path: '/farmer/earnings', icon: <CreditCard size={20} /> },
-    { name: 'Notifications', path: '/farmer/notifications', icon: <Bell size={20} /> },
-    { name: 'Profile & Ratings', path: '/farmer/profile', icon: <User size={20} /> },
-    { name: 'Support', path: '/farmer/support', icon: <HelpCircle size={20} /> },
+  const navLabels = [
+    'Dashboard',
+    'Factory Demands',
+    'My Contributions',
+    'Orders Tracking',
+    'Earnings & Payments',
+    'Notifications',
+    'Profile & Ratings',
+    'Support',
+    'Logout'
   ];
 
-  const pageTitle = navItems.find(item => location.pathname.includes(item.path))?.name || 'Dashboard';
+  const translatedLabels = useTranslate(navLabels);
+
+  const navItems = [
+    { name: translatedLabels[0], path: '/farmer/dashboard', icon: <LayoutDashboard size={20} /> },
+    { name: translatedLabels[1], path: '/farmer/demands', icon: <Search size={20} /> },
+    { name: translatedLabels[2], path: '/farmer/contributions', icon: <FileText size={20} /> },
+    { name: translatedLabels[3], path: '/farmer/orders', icon: <Map size={20} /> },
+    { name: translatedLabels[4], path: '/farmer/earnings', icon: <CreditCard size={20} /> },
+    { name: translatedLabels[5], path: '/farmer/notifications', icon: <Bell size={20} /> },
+    { name: translatedLabels[6], path: '/farmer/profile', icon: <User size={20} /> },
+    { name: translatedLabels[7], path: '/farmer/support', icon: <HelpCircle size={20} /> },
+  ];
+
+  const pageTitle = navItems.find(item => location.pathname.includes(item.path))?.name || translatedLabels[0];
 
   return (
     <div className="min-h-screen bg-neutral-50 flex font-sans text-neutral-900">
@@ -55,7 +71,7 @@ const FarmerLayout = () => {
               }
             >
               <span className="text-neutral-500">{item.icon}</span>
-              <span>{item.name}</span>
+              <span className="transition-opacity duration-300 opacity-100">{item.name}</span>
             </NavLink>
           ))}
         </nav>
@@ -63,7 +79,7 @@ const FarmerLayout = () => {
         <div className="p-4 border-t border-neutral-200">
           <NavLink to="/" className="flex items-center space-x-3 px-3 py-2.5 rounded-md text-sm font-medium text-neutral-600 hover:bg-red-50 hover:text-red-600 transition-colors">
             <LogOut size={20} />
-            <span>Logout</span>
+            <span className="transition-opacity duration-300 opacity-100">{translatedLabels[8]}</span>
           </NavLink>
         </div>
       </aside>
@@ -80,9 +96,10 @@ const FarmerLayout = () => {
             >
               <Menu size={24} />
             </button>
-            <h1 className="text-lg font-semibold tracking-tight">{pageTitle}</h1>
+            <h1 className="text-lg font-semibold tracking-tight transition-opacity duration-300 opacity-100">{pageTitle}</h1>
           </div>
           <div className="flex items-center space-x-4">
+            <LanguageSwitcher />
             <button className="relative text-neutral-500 hover:text-neutral-900 transition-colors">
               <Bell size={20} />
               <span className="absolute top-0 right-0 h-2 w-2 bg-red-500 rounded-full"></span>
@@ -116,7 +133,7 @@ const FarmerLayout = () => {
                     }
                   >
                     <span className="text-neutral-500">{item.icon}</span>
-                    <span>{item.name}</span>
+                    <span className="transition-opacity duration-300 opacity-100">{item.name}</span>
                   </NavLink>
                 ))}
             </nav>
