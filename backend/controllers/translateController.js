@@ -29,7 +29,7 @@ function callHuggingFace(text, tgtLang) {
       path: '/models/facebook/nllb-200-distilled-600M',
       method: 'POST',
       headers: {
-        'Authorization': `Bearer HF_API_KEY_REMOVED`,
+        'Authorization': `Bearer ${process.env.HF_API_KEY}`,
         'Content-Type': 'application/json',
         'Content-Length': Buffer.byteLength(body)
       }
