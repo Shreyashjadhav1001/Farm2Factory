@@ -203,21 +203,23 @@ const OrderManagement = () => {
                   </div>
                 </div>
 
-                {/* Tracking Timeline Bar */}
-                <div className="mt-10 px-4">
-                  <div className="relative flex justify-between items-center">
-                    {steps.map((step, idx) => (
-                      <div key={idx} className="flex flex-col items-center relative z-10">
-                        <div className={`w-10 h-10 rounded-full flex items-center justify-center transition-all duration-500 border-4 border-white ${idx <= currentStep ? 'bg-blue-600 text-white shadow-xl shadow-blue-200 scale-110' : 'bg-slate-100 text-slate-300'}`}>
-                          {idx < currentStep ? <CheckCircle className="h-5 w-5" /> : (idx === currentStep ? <Clock className="h-5 w-5 animate-pulse" /> : <Package className="h-4 w-4" />)}
-                        </div>
-                        <span className={`text-[10px] font-black mt-3 uppercase tracking-tighter ${idx <= currentStep ? 'text-slate-900' : 'text-slate-300'}`}>{step}</span>
-                      </div>
-                    ))}
-                    <div className="absolute top-5 left-0 w-full h-1 bg-slate-100 -z-0 rounded-full"></div>
-                    <div className="absolute top-5 left-0 h-1 bg-blue-600 transition-all duration-1000 -z-0 rounded-full shadow-sm" style={{ width: `${(currentStep / (steps.length - 1)) * 100}%` }}></div>
-                  </div>
-                </div>
+                 {/* Tracking Timeline Bar */}
+                 <div className="mt-10 px-4 overflow-hidden relative">
+                   <div className="relative flex justify-between items-center w-full box-border">
+                     {/* Bounded tracking line container */}
+                     <div className="absolute top-5 left-0 right-0 h-1 bg-slate-100 -z-0 rounded-full overflow-hidden">
+                       <div className="h-full bg-blue-600 transition-all duration-1000 rounded-full shadow-sm" style={{ width: `${Math.min((currentStep / (steps.length - 1)) * 100, 100)}%` }}></div>
+                     </div>
+                     {steps.map((step, idx) => (
+                       <div key={idx} className="flex flex-col items-center relative z-10">
+                         <div className={`w-10 h-10 rounded-full flex items-center justify-center transition-all duration-500 border-4 border-white ${idx <= currentStep ? 'bg-blue-600 text-white shadow-xl shadow-blue-200 scale-110' : 'bg-slate-100 text-slate-300'}`}>
+                           {idx < currentStep ? <CheckCircle className="h-5 w-5" /> : (idx === currentStep ? <Clock className="h-5 w-5 animate-pulse" /> : <Package className="h-4 w-4" />)}
+                         </div>
+                         <span className={`text-[10px] font-black mt-3 uppercase tracking-tighter ${idx <= currentStep ? 'text-slate-900' : 'text-slate-300'}`}>{step}</span>
+                       </div>
+                     ))}
+                   </div>
+                 </div>
               </div>
 
               {/* Expanded Detail View */}
